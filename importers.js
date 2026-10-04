@@ -6,7 +6,7 @@ export function parseDelimited(text,delimiter){
  if(quote)throw Error('CSV 引号不完整');row.push(cell);if(row.some(x=>x.trim()))rows.push(row);return rows;
 }
 const xml = s=>{const d=new DOMParser().parseFromString(s,'application/xml');if(d.querySelector('parsererror'))throw Error('Excel XML 无效');return d;};
-const nodes=(d,name)=>[...d.getElementsByTagNameNS('*',name)];
+const nodes=(d,name)=>{const found=[...d.getElementsByTagNameNS('*',name)];return found.length?found:[...d.getElementsByTagName('*')].filter(n=>(n.localName||n.tagName.split(':').pop()).toLowerCase()===name.toLowerCase());};
 export async function readXlsx(buffer){
  const zip=await JSZip.loadAsync(buffer);const total=Object.values(zip.files).reduce((sum,f)=>sum+(f._data?.uncompressedSize||0),0);if(total>100*1024*1024)throw Error('Excel 解压后超过 100 MB');
  const read=async p=>{if(!zip.file(p))throw Error(`Excel 缺少 ${p}`);return xml(await zip.file(p).async('string'));};

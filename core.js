@@ -39,7 +39,8 @@ export function advanceSession(state,correct,alreadyRecorded=false){
 export function validateBackup(s){
  if(s?.format!=='puppy-vocab-backup'||s.version!==1||!Array.isArray(s.books)||!s.words||Array.isArray(s.words))throw Error('不是小狗词书备份');
  if(Object.keys(s.words).length>100000||s.books.length>1000)throw Error('备份过大');
- const words={};for(const [k,w]of Object.entries(s.words)){const r=cleanRow({...w,word:w.word});if(!r||r.key!==k)throw Error('备份中有无效单词');words[k]={...r,notes:Array.isArray(w.notes)?w.notes.map(String):[],sources:Array.isArray(w.sources)?w.sources.map(String):[],alternatives:Array.isArray(w.alternatives)?w.alternatives.map(String):[],progress:{passed:w.progress?.passed===true,errors:Math.max(0,Number(w.progress?.errors)||0),seen:Math.max(0,Number(w.progress?.seen)||0),lastSeen:Number(w.progress?.lastSeen)||0}};}
+ const words={};for(const [k,w]of Object.entries(s.words)){const r=cleanRow({...w,word:w.word});if(!r||r.key!==k)throw Error('备份中有无效单词');words[k]={...r,notes:Array.isArray(w.notes)?w.notes.map(String):[],sources:Array.isArray(w.sources)?w.sources.map(String):[],alternatives:Array.isArray(w.alternatives)?w.alternatives.map(String):[],progress:{...w.progress,passed:w.progress?.passed===true,errors:Math.max(0,Number(w.progress?.errors)||0),seen:Math.max(0,Number(w.progress?.seen)||0),lastSeen:Number(w.progress?.lastSeen)||0}};}
  const ids=new Set();const books=s.books.map(b=>{if(typeof b.id!=='string'||ids.has(b.id)||!Array.isArray(b.groups))throw Error('词书结构不完整');ids.add(b.id);const seen=new Set(),groups=b.groups.map(g=>{if(!Array.isArray(g.keys))throw Error('分组引用无效');for(const k of g.keys){if(!words[k]||seen.has(k))throw Error('分组引用无效或重复');seen.add(k);}return {id:String(g.id),label:String(g.label),keys:g.keys};});return {id:b.id,name:String(b.name),groups,createdAt:Number(b.createdAt)||Date.now()};});
- return {...fresh(),words,books,settings:{...fresh().settings,...s.settings},session:null};
+ const events=Array.isArray(s.events)?s.events.filter(e=>e&&typeof e==='object'&&words[e.key]).slice(-3000):[];
+ return {...fresh(),words,books,events,settings:{...fresh().settings,...s.settings},session:null};
 }
